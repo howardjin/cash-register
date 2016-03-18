@@ -1,7 +1,10 @@
-require "cash/register/version"
 
-module Cash
-  module Register
-    # Your code goes here...
+class Register
+  def generateReceipts(inputs)
+    ['wrong receipt']
+  end
+
+  def registerItems(items)
+
   end
 end
