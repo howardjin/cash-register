@@ -1,33 +1,23 @@
+require 'rubygems'
 require 'json'
-
-class LineItem
-  attr_accessor :product, :count
-
-  def initialize(product, count)
-    @product = product
-    @count = count
-  end
-end
+require 'cash/line_item'
+require 'active_support'
 
 class Register
 
-  def generateReceipts(inputs)
+  def get_line_items(inputs)
     inputJson = JSON.parse(convert_to_valid_json(inputs))
-    inputJsonItem = inputJson[0]
-    lineItemParts = inputJsonItem.split('-')
+    inputJson.map { |jsonItem| LineItem.fromString(jsonItem, @items) }
+  end
 
-    if(lineItemParts[1].nil?)
-      count = 1
-    elsif
-      count = lineItemParts[1].to_i
-    end
+
+  def generateReceipts(inputs)
+    lineItems = get_line_items(inputs)
     receipts  = []
-    product = @items.detect { |item| item.id == lineItemParts[0]}
-    lineItem = LineItem.new(product,count)
     add_header(receipts)
-    add_line_items(receipts, lineItem)
+    add_line_items(receipts, lineItems)
     add_separator(receipts)
-    add_summary(product, receipts, count)
+    add_summary(receipts, lineItems)
     add_footer(receipts)
     receipts
   end
@@ -36,12 +26,15 @@ class Register
     inputs.tr("'", '"')
   end
 
-  def add_line_items(receipts, lineItem)
-    receipts << "名称:#{lineItem.product.name},数量:#{lineItem.count}瓶,单价:#{formatPrice(lineItem.product.unit_price)}(元),小计:#{formatPrice(lineItem.product.unit_price * lineItem.count)}(元)"
+  def add_line_items(receipts, lineItems)
+    lineItems.each do |lineItem|
+      receipts << "名称:#{lineItem.product_name},数量:#{lineItem.count}#{lineItem.product_unit_name},单价:#{formatPrice(lineItem.product_unit_price)}(元),小计:#{formatPrice(lineItem.total_price)}(元)"
+    end
   end
 
-  def add_summary(product, receipts, count)
-    receipts << "总计:#{formatPrice(product.unit_price * count)}(元)"
+  def add_summary(receipts, lineItems)
+    total_price = lineItems.map(&:total_price).reduce(0, :+)
+    receipts << "总计:#{formatPrice(total_price)}(元)"
   end
 
   def add_separator(receipts)
