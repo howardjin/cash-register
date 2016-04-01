@@ -57,4 +57,8 @@ class Register
     sprintf('%.2f', price)
   end
 
+  def registerBuyTwoGetOneFreeDiscounts(i)
+    # code here
+  end
+
 end

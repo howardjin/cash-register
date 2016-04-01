@@ -68,6 +68,35 @@ describe Register do
       expect(results[4]).to eq '总计:8.00(元)'
       expect(results[5]).to eq '******************'
     end
+
+  end
+
+  context 'has discount' do
+
+    xit 'buy 2 get 1 free' do
+
+      product = Product.new
+      product.id = 'ITEM000001'
+      product.name = '可口可乐'
+      product.unit_name = '瓶'
+      product.unit_price = 3.00
+
+      subject.registerItems([product])
+      subject.registerBuyTwoGetOneFreeDiscounts('["ITEM000001"]');
+
+      results = subject.generateReceipts("['ITEM000001-3']")
+      expect(results[0]).to eq '***<没赚钱商店>购物清单***'
+      expect(results[1]).to eq '名称:可口可乐,数量:3瓶,单价:3.00(元),小计:6.00(元)'
+      expect(results[2]).to eq '------------------'
+      expect(results[3]).to eq '买二赠一商品:'
+      expect(results[4]).to eq '名称:可口可乐,数量:1瓶'
+      expect(results[5]).to eq '------------------'
+      expect(results[6]).to eq '总计:6.00(元)'
+      expect(results[7]).to eq '节省:3.00(元)'
+      expect(results[8]).to eq '******************'
+
+    end
+
   end
 
 end

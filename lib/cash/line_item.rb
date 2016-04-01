@@ -1,3 +1,5 @@
+require 'cash/discount'
+
 class LineItem
 
   attr_reader :count
@@ -14,9 +16,10 @@ class LineItem
     LineItem.new(product, count)
   end
 
-  def initialize(product, count)
+  def initialize(product, count, discount = DiscountCalculator.NoDiscount)
     @product = product
     @count = count
+    @discount = discount
   end
 
   def product_name
@@ -32,7 +35,7 @@ class LineItem
   end
 
   def total_price
-    @product.unit_price * @count
+    @product.unit_price * @count - @discount.discount(self)
   end
 
 end
