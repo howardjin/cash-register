@@ -14,35 +14,42 @@ class Register
     inputJson.map { |jsonItem| LineItem.fromString(jsonItem, @items, @buy_two_free_one_item_ids) }
   end
 
-
   def generateReceipts(inputs)
     lineItems = get_line_items(inputs)
-    receipts  = []
+    print_receipt(
+        lambda { generate_line_items(lineItems) },
+        lambda { generate_free_items(lineItems) },
+        lambda { generate_summary(lineItems) })
+  end
+
+  def print_receipt(section1, section2, section3)
+    receipts = []
     add_header(receipts)
-    add_line_items(receipts, lineItems)
+    receipts.push(*section1.call)
     add_separator(receipts)
-    add_discount(receipts, lineItems)
-    add_summary(receipts, lineItems)
-    add_saved_money(receipts, lineItems)
+    receipts.push(*section2.call)
+    add_separator(receipts)
+    receipts.push(*section3.call)
     add_footer(receipts)
     receipts
   end
 
-  def add_discount(receipts, lineItems)
+  def generate_free_items(lineItems)
+    receipts = []
     discount_items = lineItems.select { |item| item.product_count_for_free > 0 }
     if discount_items.length > 0
       receipts << '买二赠一商品:'
       discount_items.each do |item|
         receipts << "名称:#{item.product_name},数量:#{item.product_count_for_free}#{item.product_unit_name}"
       end
-      add_separator(receipts)
     end
+    receipts
   end
 
-  def add_saved_money(receipts, lineItems)
+  def generate_saved_money(lineItems)
     total_discount = lineItems.map(&:saved_money).reduce(0, :+)
     if total_discount > 0
-      receipts << "节省:#{formatPrice(total_discount)}(元)"
+      "节省:#{formatPrice(total_discount)}(元)"
     end
   end
 
@@ -50,19 +57,31 @@ class Register
     inputs.tr("'", '"')
   end
 
-  def add_line_items(receipts, lineItems)
-    lineItems.each do |lineItem|
-      receipts << "名称:#{lineItem.product_name},数量:#{lineItem.count}#{lineItem.product_unit_name},单价:#{formatPrice(lineItem.product_unit_price)}(元),小计:#{formatPrice(lineItem.total_price)}(元)"
+  def generate_line_items(lineItems)
+    lineItems.map do |lineItem|
+      "名称:#{lineItem.product_name},数量:#{lineItem.count}#{lineItem.product_unit_name},单价:#{formatPrice(lineItem.product_unit_price)}(元),小计:#{formatPrice(lineItem.total_price)}(元)"
     end
   end
 
-  def add_summary(receipts, lineItems)
+  def generate_summary(lineItems)
+    saved_money = generate_saved_money(lineItems)
+    receipts = [generate_total_money(lineItems)]
+    if saved_money
+      receipts << saved_money
+    end
+    receipts
+  end
+
+  def generate_total_money(lineItems)
     total_price = lineItems.map(&:total_price).reduce(0, :+)
-    receipts << "总计:#{formatPrice(total_price)}(元)"
+    "总计:#{formatPrice(total_price)}(元)"
   end
 
   def add_separator(receipts)
-    receipts << '------------------'
+    separator = '------------------'
+    if receipts.last != separator
+      receipts << separator
+    end
   end
 
   def add_footer(receipts)
