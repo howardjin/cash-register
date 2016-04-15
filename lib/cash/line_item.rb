@@ -4,7 +4,7 @@ class LineItem
 
   attr_reader :count
 
-  def self.fromString(itemString, products)
+  def self.fromString(itemString, products, buy_two_free_one_item_ids)
     lineItemParts = itemString.split('-')
 
     if(lineItemParts[1].nil?)
@@ -13,7 +13,12 @@ class LineItem
     count = lineItemParts[1].to_i
     end
     product = products.detect { |item| item.id == lineItemParts[0]}
-    LineItem.new(product, count)
+    if(buy_two_free_one_item_ids.include? lineItemParts[0])
+      LineItem.new(product, count, DiscountCalculator.Buy2Get1Free)
+    else
+      LineItem.new(product, count)
+    end
+
   end
 
   def initialize(product, count, discount = DiscountCalculator.NoDiscount)
@@ -38,4 +43,11 @@ class LineItem
     @product.unit_price * @count - @discount.discount(self)
   end
 
+  def saved_money
+    @discount.discount(self)
+  end
+
+  def product_count_for_free
+    (@discount.discount(self) / @product.unit_price).to_i
+  end
 end

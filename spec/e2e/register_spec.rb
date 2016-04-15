@@ -73,7 +73,7 @@ describe Register do
 
   context 'has discount' do
 
-    xit 'buy 2 get 1 free' do
+    it 'buy 2 get 1 free' do
 
       product = Product.new
       product.id = 'ITEM000001'
